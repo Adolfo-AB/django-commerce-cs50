@@ -1,0 +1,92 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+    <div>
+    <h1>{{ listing.name }}
+    <h6>
+        {% if listing.status == 0 %}
+            <span class="badge badge-pill badge-danger">Closed Listing</span>
+        {% endif %}
+    </h6></h1>
+    </div>
+
+    <ul>
+        <li>Description: {{ listing.description }}</li>
+        <li>Current price: {{ listing.current_price }}</li>
+        <li>Category: {{ category.1 }}</li>
+        <img src="{{ listing.image_url }}" alt="No image available" height="200">
+    </ul>
+
+    {% if user.is_authenticated %}
+        
+        {% if not seller %}
+            {% if listing.status %}
+                <form action="{% url 'watch_unwatch' listing.id %}" method="POST">
+                    {% csrf_token %}
+                    <input class="btn btn-info" type="submit" value="{{ watchlist_label }}">
+                    {% if watched %}
+                        <div>This item has been added to your watchlist.</div>
+                    {% endif %}
+                    {% if unwatched %}
+                        <div>This item has been removed from your watchlist</div>
+                    {% endif %}
+                </form>
+            {% endif %}
+
+            <hr>
+            <h2>Bid</h2>
+            {% if listing.status %}
+            <form action="{% url 'bid' listing.id %}" method="POST">
+                {% csrf_token %}
+                {% if message %}
+                    <div>{{ message }}</div>
+                {% endif %}
+                <input id="current_price" name="current_price" type="number" placeholder="{{ listing.current_price }}">
+                <input type="submit">
+            </form>
+            {% else %}
+                <div>This listing has been closed.</div>
+                {% if user == highest_bidder %}
+                    <div class="alert alert-success" role="alert">
+                        You have won this bid.
+                    </div>
+                {% endif %}
+            {% endif %}
+
+        {% else %}
+            {% if listing.status %}
+                <form action="{% url 'close' listing.id %}" method="POST">
+                    {% csrf_token %}
+                    <input type="submit" value="Close listing">
+                </form>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    You have closed this listing
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    <hr>
+    <h2>Comments</h2>
+    <ul>
+        {% for comment in comments %}
+            <li>
+                <div>Author: {{ comment.user }}</div> 
+                <div>Comment: {{ comment.text }}</div>
+                <hr>
+            </li>
+        {% empty %}
+        No comments added yet
+        {% endfor %}
+    </ul>
+    {% if user.is_authenticated and listing.status == 1%}
+        <form action="{% url 'comment' listing.id %}" method="POST">
+            {% csrf_token %}
+            <div>Add comment:</div>
+            <input id="comment" name="comment" type="text" placeholder="Add your comment here">
+            <input type="submit">
+        </form>
+    {% endif %}
+{% endblock %}
